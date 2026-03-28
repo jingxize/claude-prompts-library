@@ -1,0 +1,124 @@
+// schema.prisma - SQLite 兼容版本 (本地开发用)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// 用户
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  image         String?
+  role          String    @default("USER")  // 枚举改为 String: USER | ADMIN
+  prompts       Prompt[]
+  favorites     Favorite[]
+  comments      Comment[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// 提示词模板
+model Prompt {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  content     String   // 移除 @db.Text
+  difficulty  String   @default("BEGINNER")  // 枚举改为 String: BEGINNER | INTERMEDIATE | ADVANCED
+  status      String   @default("APPROVED")  // 枚举改为 String: PENDING | APPROVED | REJECTED | DRAFT
+  views       Int      @default(0)
+  copies      Int      @default(0)
+  rating      Float    @default(0)
+  ratingCount Int      @default(0)
+  
+  authorId    String
+  author      User     @relation(fields: [authorId], references: [id])
+  
+  categories  PromptCategory[]
+  tags        PromptTag[]
+  favorites   Favorite[]
+  comments    Comment[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([status])
+  @@index([authorId])
+  @@index([createdAt])
+}
+
+// 分类
+model Category {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  prompts     PromptCategory[]
+  
+  @@index([slug])
+}
+
+// 标签
+model Tag {
+  id      String   @id @default(cuid())
+  name    String   @unique
+  slug    String   @unique
+  prompts PromptTag[]
+  
+  @@index([slug])
+}
+
+// 提示词 - 分类关联表
+model PromptCategory {
+  promptId   String
+  categoryId String
+  prompt     Prompt   @relation(fields: [promptId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  
+  @@id([promptId, categoryId])
+}
+
+// 提示词 - 标签关联表
+model PromptTag {
+  promptId String
+  tagId    String
+  prompt   Prompt @relation(fields: [promptId], references: [id], onDelete: Cascade)
+  tag      Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  
+  @@id([promptId, tagId])
+}
+
+// 收藏
+model Favorite {
+  userId    String
+  promptId  String
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  prompt    Prompt @relation(fields: [promptId], references: [id], onDelete: Cascade)
+  
+  @@id([userId, promptId])
+}
+
+// 评论
+model Comment {
+  id        String   @id @default(cuid())
+  content   String   // 移除 @db.Text
+  promptId  String
+  userId    String
+  parentId  String?
+  
+  prompt    Prompt   @relation(fields: [promptId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent    Comment? @relation("CommentReplies", fields: [parentId], references: [id])
+  replies   Comment[] @relation("CommentReplies")
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([promptId])
+  @@index([userId])
+}

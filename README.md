@@ -1,112 +1,119 @@
-# Claude 提示词模板库 🎯
+# Claude 提示词模板库 - MVP
 
-一个面向中文用户的 Claude AI 提示词分享平台，帮助用户更好地使用 Claude AI。
+基于 Toolify.ai 榜单分析，我们正在构建一个中文用户的 Claude 提示词分享平台。
 
-## ✨ 特性
-
-- 🎯 **快速上手**：新手找到即用的高质量提示词
-- 📚 **学习成长**：从模板中学习提示词编写技巧
-- 🔍 **精准搜索**：按场景/难度/分类快速定位
-- ✨ **一键复制**：点击即复制到剪贴板
-
-## 🚀 技术栈
-
-- **框架**: Next.js 14.x (App Router)
-- **语言**: TypeScript 5.x
-- **样式**: Tailwind CSS 3.x
-- **ORM**: Prisma 5.x
-- **数据库**: PostgreSQL 15.x
-- **认证**: NextAuth.js 4.x
-- **部署**: Vercel
-
-## 📚 项目文档
-
-- [产品需求文档 (PRD)](./docs/prd.md)
-- [UI 设计文档](./docs/ui-design.md)
-- [技术架构文档](./docs/tech-architecture.md)
-
-## 🏗️ 功能分类
-
-| 分类 | 描述 | 示例 |
-|------|------|------|
-| **写作** | 文案、文章、邮件、报告 | 小红书文案、周报、邮件 |
-| **编程** | 代码生成、调试、解释 | Python 脚本、SQL 查询 |
-| **分析** | 数据分析、总结、洞察 | Excel 分析、会议纪要 |
-| **创意** | 头脑风暴、创意生成 | 品牌名、广告语、故事 |
-| **日常** | 翻译、润色、学习 | 翻译、语法检查、学习 |
-
-## 🛠️ 开发指南
-
-### 环境要求
-
-- Node.js 18+ 
-- npm 或 pnpm
-- PostgreSQL 数据库
-
-### 快速开始
-
-```bash
-# 安装依赖
-npm install
-
-# 配置环境变量
-cp .env.example .env.local
-
-# 运行开发服务器
-npm run dev
-
-# 构建生产版本
-npm run build
-
-# 启动生产服务器
-npm start
-```
-
-### 数据库设置
-
-```bash
-# 初始化 Prisma
-npx prisma init
-
-# 运行数据库迁移
-npx prisma migrate dev
-
-# 生成 Prisma 客户端
-npx prisma generate
-```
-
-## 📦 项目结构
+## 项目结构
 
 ```
 claude-prompts-library/
+├── prisma/
+│   ├── schema.prisma          # 数据库模型定义
+│   └── seed.ts               # 种子数据脚本
 ├── src/
-│   ├── app/           # Next.js App Router 页面
-│   ├── components/    # React 组件
-│   ├── lib/           # 工具函数
-│   └── styles/        # 全局样式
-├── docs/              # 项目文档
-├── prisma/            # 数据库 Schema
-├── public/            # 静态资源
-└── package.json
+│   ├── app/                  # Next.js 14 App Router
+│   │   ├── layout.tsx        # 根布局
+│   │   ├── page.tsx          # 首页
+│   │   ├── category/
+│   │   │   └── [slug]/
+│   │   │       └── page.tsx  # 分类页
+│   │   ├── prompt/
+│   │   │   └── [id]/
+│   │   │       └── page.tsx  # 详情页
+│   │   ├── search/
+│   │   │   └── page.tsx      # 搜索页
+│   │   └── api/              # API 路由
+│   │       ├── prompts/
+│   │       │   └── [id]/
+│   │       │       └── route.ts
+│   │       └── categories/
+│   │           └── route.ts
+│   ├── components/           # 可复用组件
+│   │   ├── PromptCard.tsx    # 提示词卡片
+│   │   ├── CategoryBadge.tsx # 分类标签
+│   │   ├── CopyButton.tsx    # 复制按钮
+│   │   ├── SearchBox.tsx     # 搜索框
+│   │   ├── Header.tsx        # 顶部导航
+│   │   └── Footer.tsx        # 页脚
+│   ├── lib/
+│   │   └── types.ts          # 类型定义
+│   └── globals.css           # 全局样式
+├── package.json
+└── README.md
 ```
 
-## 🎨 UI 设计
+## MVP 功能完成情况
 
-- **主色**: Indigo (#6366F1)
-- **辅助色**: Emerald (#10B981)
-- **强调色**: Amber (#F59E0B)
-- **字体**: Inter
+### 阶段 1: 数据库设置 (P0) ✅
+- [x] 创建 `prisma/schema.prisma` 文件，包含以下模型:
+  - User (用户)
+  - Prompt (提示词模板 - 核心表)
+  - Category (分类 - 5 大分类)
+  - PromptCategory (多对多关系)
+  - Tag (标签)
+  - PromptTag (多对多关系)
+- [x] 创建种子数据脚本 `prisma/seed.ts`:
+  - 5 个分类 (写作、编程、分析、创意、日常)
+  - 21 个示例提示词模板
 
-详细设计规范请参阅 [UI 设计文档](./docs/ui-design.md)
+### 阶段 2: 核心页面组件 (P0) ✅
+- [x] **首页** (`src/app/page.tsx`):
+  - 搜索框
+  - 热门分类展示
+  - 热门提示词卡片 (6 个)
+  - 最新提示词卡片 (2 个)
+- [x] **分类页** (`src/app/category/[slug]/page.tsx`):
+  - 分类标题和描述
+  - 提示词列表
+- [x] **详情页** (`src/app/prompt/[id]/page.tsx`):
+  - 提示词标题、分类、难度
+  - 提示词内容 (代码块展示)
+  - 一键复制按钮
+  - 使用示例
+  - 作者信息
+- [x] **搜索页** (`src/app/search/page.tsx`):
+  - 搜索框
+  - 搜索结果列表
+  - 空状态提示
 
-## 📄 许可证
+### 阶段 3: 组件库 (P0) ✅
+- [x] `PromptCard.tsx` - 提示词卡片
+- [x] `CategoryBadge.tsx` - 分类标签
+- [x] `CopyButton.tsx` - 复制按钮 (带 Toast 提示)
+- [x] `SearchBox.tsx` - 搜索框
+- [x] `Header.tsx` - 顶部导航
+- [x] `Footer.tsx` - 页脚
 
-MIT License
+### 阶段 4: API 路由 (P1) ✅
+- [x] `GET /api/prompts` - 获取提示词列表 (支持筛选/分页)
+- [x] `GET /api/prompts/:id` - 获取单个提示词详情
+- [x] `GET /api/categories` - 获取分类列表
+- [x] `POST /api/prompts/:id/copy` - 增加复制计数
 
-## 👥 贡献
+## 技术栈
+- Next.js 14 (App Router)
+- TypeScript
+- Tailwind CSS
+- Prisma ORM
+- PostgreSQL (数据库设计)
 
-欢迎提交 Issue 和 Pull Request！
+## 开发说明
 
----
+1. 项目遵循 `docs/ui-design.md` 的设计规范
+2. 使用响应式设计 (移动优先)
+3. 所有代码包含 TypeScript 类型定义
+4. 组件可复用，遵循原子设计理念
 
-**Built with ❤️ by jingxize**
+## 运行项目
+
+```bash
+npm install
+npx prisma generate
+npm run dev
+```
+
+## 下一步
+
+- 集成真实的数据库连接
+- 添加用户认证系统
+- 实现提示词提交功能
+- 完善搜索功能

@@ -1,9 +1,10 @@
+// src/app/category/[slug]/page.tsx
 'use client';
 
 import React from 'react';
+import { notFound } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import SearchBox from '@/components/SearchBox';
 import PromptCard from '@/components/PromptCard';
 import CategoryBadge from '@/components/CategoryBadge';
 import { PromptWithRelations } from '@/lib/types';
@@ -18,7 +19,7 @@ const mockCategories = [
 ];
 
 // Mock prompts data
-const mockHotPrompts: PromptWithRelations[] = [
+const mockPrompts: PromptWithRelations[] = [
   {
     id: '1',
     title: '小红书爆款文案生成器',
@@ -123,49 +124,23 @@ const mockHotPrompts: PromptWithRelations[] = [
   }
 ];
 
-const mockNewPrompts: PromptWithRelations[] = [
-  {
-    id: '7',
-    title: 'JavaScript调试专家',
-    description: '帮助调试JavaScript代码中的错误',
-    content: '请帮我找出以下JavaScript代码中的错误...',
-    difficulty: 'INTERMEDIATE',
-    status: 'APPROVED',
-    views: 1245,
-    copies: 321,
-    rating: 4.7,
-    ratingCount: 32,
-    authorId: 'user7',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    categories: [{ category: mockCategories[1] }],
-    tags: [{ tag: { id: '7', name: 'JavaScript', slug: 'javascript' } }]
-  },
-  {
-    id: '8',
-    title: '会议纪要整理器',
-    description: '将会议录音或笔记整理成结构化纪要',
-    content: '请将以下会议内容整理成结构化的会议纪要...',
-    difficulty: 'BEGINNER',
-    status: 'APPROVED',
-    views: 987,
-    copies: 210,
-    rating: 4.6,
-    ratingCount: 25,
-    authorId: 'user8',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    categories: [{ category: mockCategories[2] }],
-    tags: [{ tag: { id: '8', name: '办公', slug: 'office' } }]
-  }
-];
-
-const HomePage: React.FC = () => {
-  const handleSearch = (query: string) => {
-    console.log('Searching for:', query);
-    // 在实际应用中，这里会导航到搜索结果页面
-    window.location.href = `/search?q=${encodeURIComponent(query)}`;
+interface CategoryPageProps {
+  params: {
+    slug: string;
   };
+}
+
+const CategoryPage: React.FC<CategoryPageProps> = ({ params }) => {
+  const category = mockCategories.find(cat => cat.slug === params.slug);
+  
+  if (!category) {
+    notFound();
+  }
+
+  // Filter prompts by category
+  const categoryPrompts = mockPrompts.filter(prompt => 
+    prompt.categories.some(pc => pc.category.slug === params.slug)
+  );
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -173,71 +148,62 @@ const HomePage: React.FC = () => {
       
       <main className="flex-grow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Hero Section with Search */}
-          <section className="mb-12 text-center">
-            <h1 className="text-4xl font-extrabold text-gray-900 sm:text-5xl mb-6">
-              Claude 提示词模板库
-            </h1>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
-              发现、分享、学习 Claude AI 提示词模板，覆盖写作、编程、分析、创意等场景
+          {/* Category Header */}
+          <section className="mb-8">
+            <div className="flex items-center gap-4 mb-4">
+              <h1 className="text-3xl font-bold text-gray-900">{category.name}</h1>
+              <CategoryBadge name={category.name} slug={category.slug} isActive={true} />
+            </div>
+            <p className="text-lg text-gray-600 max-w-3xl">
+              {category.description}
             </p>
-            
-            <div className="max-w-2xl mx-auto">
-              <SearchBox onSearch={handleSearch} />
+            <div className="mt-2 text-sm text-gray-500">
+              {categoryPrompts.length} 个相关提示词模板
             </div>
           </section>
           
-          {/* Hot Categories */}
-          <section className="mb-12">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-              <span className="text-red-500">🔥</span> 热门分类
-            </h2>
-            <div className="flex flex-wrap gap-3 justify-center md:justify-start">
-              {mockCategories.map((category) => (
-                <CategoryBadge 
-                  key={category.id} 
-                  name={category.name} 
-                  slug={category.slug} 
-                  onClick={() => window.location.href = `/category/${category.slug}`}
-                />
-              ))}
+          {/* Other Categories */}
+          <section className="mb-8">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">其他分类</h2>
+            <div className="flex flex-wrap gap-3">
+              {mockCategories
+                .filter(cat => cat.slug !== params.slug)
+                .map((otherCat) => (
+                  <CategoryBadge 
+                    key={otherCat.id} 
+                    name={otherCat.name} 
+                    slug={otherCat.slug} 
+                    onClick={() => window.location.href = `/category/${otherCat.slug}`}
+                  />
+                ))}
             </div>
           </section>
           
-          {/* Hot Prompts */}
-          <section className="mb-12">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                <span className="text-yellow-500">⭐</span> 热门提示词
-              </h2>
-              <a href="/search?sort=popular" className="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
-                查看全部 →
-              </a>
-            </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {mockHotPrompts.map((prompt) => (
-                <PromptCard key={prompt.id} prompt={prompt} />
-              ))}
-            </div>
-          </section>
-          
-          {/* New Prompts */}
+          {/* Category Prompts */}
           <section>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                <span className="text-green-500">🆕</span> 最新提示词
-              </h2>
-              <a href="/search?sort=newest" className="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
-                查看全部 →
-              </a>
-            </div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">
+              {category.name} 相关提示词
+            </h2>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {mockNewPrompts.map((prompt) => (
-                <PromptCard key={prompt.id} prompt={prompt} />
-              ))}
-            </div>
+            {categoryPrompts.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {categoryPrompts.map((prompt) => (
+                  <PromptCard key={prompt.id} prompt={prompt} />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <div className="text-gray-400 text-5xl mb-4">🔍</div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">暂无提示词</h3>
+                <p className="text-gray-500">该分类下还没有提示词模板，欢迎提交您的模板！</p>
+                <button 
+                  className="mt-4 bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 transition-colors"
+                  onClick={() => window.location.href = '/submit'}
+                >
+                  提交模板
+                </button>
+              </div>
+            )}
           </section>
         </div>
       </main>
@@ -247,4 +213,4 @@ const HomePage: React.FC = () => {
   );
 };
 
-export default HomePage;
+export default CategoryPage;
