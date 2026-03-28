@@ -133,14 +133,28 @@ export async function GET(request: NextRequest) {
   try {
     // Get query parameters
     const searchParams = request.nextUrl.searchParams;
+    const q = searchParams.get('q'); // Search query
     const category = searchParams.get('category');
     const tag = searchParams.get('tag');
     const difficulty = searchParams.get('difficulty');
+    const sort = searchParams.get('sort') || 'relevance'; // relevance, popular, newest, rating
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
     
     // Filter prompts based on query parameters
     let filteredPrompts = [...mockPrompts];
+    
+    // Search by keyword (title, description, content)
+    if (q) {
+      const query = q.toLowerCase();
+      filteredPrompts = filteredPrompts.filter(prompt =>
+        prompt.title.toLowerCase().includes(query) ||
+        prompt.description.toLowerCase().includes(query) ||
+        prompt.content.toLowerCase().includes(query) ||
+        prompt.categories.some(pc => pc.category.name.toLowerCase().includes(query)) ||
+        prompt.tags.some(pt => pt.tag.name.toLowerCase().includes(query))
+      );
+    }
     
     if (category) {
       filteredPrompts = filteredPrompts.filter(
@@ -159,6 +173,16 @@ export async function GET(request: NextRequest) {
         prompt => prompt.difficulty === difficulty
       );
     }
+    
+    // Apply sorting
+    if (sort === 'popular') {
+      filteredPrompts.sort((a, b) => b.copies - a.copies);
+    } else if (sort === 'newest') {
+      filteredPrompts.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    } else if (sort === 'rating') {
+      filteredPrompts.sort((a, b) => b.rating - a.rating);
+    }
+    // 'relevance' is default (no sorting for search, or original order)
     
     // Apply pagination
     const startIndex = (page - 1) * limit;
